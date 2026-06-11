@@ -426,10 +426,15 @@ def _hero_job(fake: Faker, now: datetime) -> dict:
     }
 
 
-def generate_jobs(fake: Faker, now: datetime) -> list[dict]:
-    """Build the active job queue. job-001 is always the HERO job, placed first."""
+def generate_jobs(fake: Faker, now: datetime, count: int = 24) -> list[dict]:
+    """Build the active job queue. job-001 is always the HERO job, placed first.
+
+    ``count`` non-hero jobs are produced by cycling the templates with varied
+    customers, locations, and timing so the queue and map feel populated.
+    """
     jobs: list[dict] = [_hero_job(fake, now)]
-    for i, tpl in enumerate(JOB_TEMPLATES):
+    for i in range(count):
+        tpl = JOB_TEMPLATES[i % len(JOB_TEMPLATES)]
         # Created somewhere in the last few hours; SLA derives from severity.
         created = now - timedelta(minutes=fake.random_int(10, 240))
         sla = created + SLA_BY_SEVERITY[tpl["severity"]]
@@ -479,10 +484,10 @@ def seed(client, recreate: bool, seed_value: int) -> dict[str, int]:
 
     create_indices(client, recreate=recreate)
 
-    techs = generate_technicians(fake, now)
+    techs = generate_technicians(fake, now, count=40)
     parts = generate_parts(fake)
-    incidents = generate_incidents(fake, now)
-    jobs = generate_jobs(fake, now)
+    incidents = generate_incidents(fake, now, count=100)
+    jobs = generate_jobs(fake, now, count=24)
 
     payload = {
         IDX_TECHNICIANS: techs,
@@ -492,7 +497,15 @@ def seed(client, recreate: bool, seed_value: int) -> dict[str, int]:
     }
     counts: dict[str, int] = {}
     for index, docs in payload.items():
-        bulk(client, _actions(index, docs), refresh=True)
+        # Smaller chunks + a generous timeout: incidents run ELSER inference at
+        # index time, which is slow enough to trip the default 30s request limit.
+        bulk(
+            client,
+            _actions(index, docs),
+            refresh=True,
+            chunk_size=40,
+            request_timeout=180,
+        )
         counts[index] = len(docs)
     return counts
 

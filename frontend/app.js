@@ -110,12 +110,18 @@ function setConn(live) {
 /* ─────────────────────────── Map ─────────────────────────── */
 
 function initMap(center) {
-  state.map = L.map("map", { zoomControl: true, attributionControl: false }).setView(center, 12);
+  state.map = L.map("map", { zoomControl: true, attributionControl: true }).setView(center, 12);
 
   // Dark basemap (CARTO dark matter) — fits the ops-room theme.
+  // Attribution is required by the OpenStreetMap + CARTO tile licenses.
   L.tileLayer(
     "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    { maxZoom: 19, subdomains: "abcd" }
+    {
+      maxZoom: 19,
+      subdomains: "abcd",
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    }
   ).addTo(state.map);
 
   // Route line sits UNDER the markers; markers go on top.
