@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FieldForce — AI Dispatch</title>
+
+  <!-- Leaflet CSS (CDN) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- ─────────────────────────── Header ─────────────────────────── -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark">▲</span>
+      <div class="brand-text">
+        <h1>FieldForce</h1>
+        <span class="brand-sub">AI Dispatch Console</span>
+      </div>
+    </div>
+
+    <!-- Live SLA-risk banner — polled from GET /api/sla -->
+    <div id="sla-banner" class="sla-banner sla-ok" title="Jobs at risk of breaching SLA">
+      <span class="sla-dot"></span>
+      <span id="sla-text">SLA: all clear</span>
+      <span id="sla-breakdown" class="sla-breakdown"></span>
+    </div>
+
+    <div class="header-status">
+      <span id="conn-dot" class="conn-dot"></span>
+      <span id="conn-text">connecting…</span>
+    </div>
+  </header>
+
+  <!-- ─────────────────────────── Main ──────────────────────────── -->
+  <main class="app-main">
+    <!-- Left: the live operations map -->
+    <section class="map-pane">
+      <div id="map"></div>
+      <div class="map-legend">
+        <span><i class="legend-swatch tech-available"></i> Available tech</span>
+        <span><i class="legend-swatch tech-busy"></i> On job / off shift</span>
+        <span><i class="legend-swatch job-critical"></i> Critical job</span>
+        <span><i class="legend-swatch job-high"></i> High</span>
+        <span><i class="legend-swatch job-medium"></i> Medium / low</span>
+      </div>
+    </section>
+
+    <!-- Right: job queue + dispatch plan + mission timeline -->
+    <aside class="sidebar">
+      <!-- Job Queue -->
+      <div class="panel" id="queue-panel">
+        <div class="panel-head">
+          <h2>Job Queue</h2>
+          <button id="refresh-jobs" class="ghost-btn" title="Refresh">↻</button>
+        </div>
+        <div id="job-list" class="job-list">
+          <div class="empty-hint">Loading jobs…</div>
+        </div>
+      </div>
+
+      <!-- Dispatch Plan (rendered after selecting a job + running AI) -->
+      <div class="panel" id="plan-panel" hidden>
+        <div class="panel-head">
+          <h2>Dispatch</h2>
+          <button id="close-plan" class="ghost-btn" title="Close">✕</button>
+        </div>
+        <div id="plan-body" class="plan-body"></div>
+      </div>
+
+      <!-- Mission Timeline (executed actions) -->
+      <div class="panel" id="timeline-panel">
+        <div class="panel-head">
+          <h2>Mission Timeline</h2>
+          <button id="refresh-actions" class="ghost-btn" title="Refresh">↻</button>
+        </div>
+        <div id="timeline" class="timeline">
+          <div class="empty-hint">No actions yet.</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Toast host for error / status messages -->
+  <div id="toast-host" class="toast-host"></div>
+
+  <!-- Leaflet JS (CDN) -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="/app.js"></script>
+</body>
+</html>

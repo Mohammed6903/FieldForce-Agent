@@ -1,0 +1,619 @@
+/* ============================================================================
+   FieldForce — AI Dispatch Console
+   Dark "ops room" theme. Designed for the demo screen: high contrast,
+   clear severity color-coding, restrained accent (electric cyan/violet).
+   ========================================================================== */
+
+:root {
+  /* Surfaces */
+  --bg-0: #0a0e17;          /* page */
+  --bg-1: #111725;          /* panels */
+  --bg-2: #18202f;          /* cards / inputs */
+  --bg-3: #212c40;          /* hover / raised */
+  --border: #283246;
+  --border-soft: #1d2636;
+
+  /* Text */
+  --text-0: #eef2f9;        /* primary */
+  --text-1: #aab4c6;        /* secondary */
+  --text-2: #6b7689;        /* muted */
+
+  /* Accent */
+  --accent: #2dd4bf;        /* teal/cyan */
+  --accent-2: #7c5cff;      /* violet */
+  --accent-glow: rgba(45, 212, 191, 0.35);
+
+  /* Severity */
+  --sev-critical: #ff4d5e;
+  --sev-high: #ff9f43;
+  --sev-medium: #ffd23f;
+  --sev-low: #4dd0a7;
+
+  /* Status */
+  --ok: #34d399;
+  --busy: #6b7689;
+  --danger: #ff4d5e;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─────────────────────────── Header ─────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 22px;
+  height: 62px;
+  background: linear-gradient(180deg, #121a2b 0%, #0d131f 100%);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 500;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  font-size: 22px;
+  color: var(--accent);
+  text-shadow: 0 0 14px var(--accent-glow);
+  transform: translateY(-1px);
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-text h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+/* SLA banner */
+.sla-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  transition: all 0.3s ease;
+}
+.sla-banner .sla-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex-shrink: 0;
+}
+.sla-breakdown { color: var(--text-1); font-weight: 500; font-size: 12px; }
+
+.sla-ok { color: var(--text-1); }
+.sla-ok .sla-dot { background: var(--ok); }
+
+/* Risk state: red, pulsing */
+.sla-risk {
+  color: #fff;
+  border-color: rgba(255, 77, 94, 0.5);
+  background: rgba(255, 77, 94, 0.12);
+}
+.sla-risk .sla-dot {
+  background: var(--danger);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 77, 94, 0.6); }
+  70%  { box-shadow: 0 0 0 9px rgba(255, 77, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 77, 94, 0); }
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.conn-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-2);
+}
+.conn-dot.live { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.conn-dot.down { background: var(--danger); }
+
+/* ─────────────────────────── Layout ─────────────────────────── */
+.app-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  min-height: 0;
+}
+
+/* Map */
+.map-pane { position: relative; min-height: 0; }
+#map { position: absolute; inset: 0; background: #0a0e17; }
+
+.map-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 450;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: rgba(13, 19, 31, 0.88);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(8px);
+  font-size: 11px;
+  color: var(--text-1);
+}
+.map-legend span { display: flex; align-items: center; gap: 8px; }
+.legend-swatch { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.legend-swatch.tech-available { background: var(--ok); }
+.legend-swatch.tech-busy { background: var(--busy); }
+.legend-swatch.job-critical { background: var(--sev-critical); border-radius: 2px; }
+.legend-swatch.job-high { background: var(--sev-high); border-radius: 2px; }
+.legend-swatch.job-medium { background: var(--sev-medium); border-radius: 2px; }
+
+/* Sidebar */
+.sidebar {
+  border-left: 1px solid var(--border);
+  background: var(--bg-0);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  gap: 14px;
+}
+
+.panel {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-1);
+}
+.ghost-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  border-radius: 6px;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: all 0.15s;
+}
+.ghost-btn:hover { background: var(--bg-3); color: var(--text-0); }
+
+.empty-hint {
+  padding: 22px 16px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+/* ─────────────────────────── Job Queue ─────────────────────────── */
+.job-list { max-height: 38vh; overflow-y: auto; }
+
+.job-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s;
+  border-left: 3px solid transparent;
+}
+.job-card:hover { background: var(--bg-2); }
+.job-card.selected {
+  background: var(--bg-2);
+  border-left-color: var(--accent);
+}
+.job-card.assigned { opacity: 0.62; }
+
+.job-row { display: flex; align-items: center; gap: 8px; }
+.job-title { font-weight: 600; font-size: 13.5px; flex: 1; }
+.job-meta { font-size: 12px; color: var(--text-2); display: flex; gap: 10px; flex-wrap: wrap; }
+.job-meta .svc { color: var(--text-1); }
+
+/* severity chips */
+.chip {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.chip.critical { background: rgba(255, 77, 94, 0.18); color: var(--sev-critical); }
+.chip.high { background: rgba(255, 159, 67, 0.18); color: var(--sev-high); }
+.chip.medium { background: rgba(255, 210, 63, 0.18); color: var(--sev-medium); }
+.chip.low { background: rgba(77, 208, 167, 0.18); color: var(--sev-low); }
+
+.status-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-2);
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.status-tag.assigned, .status-tag.scheduled { color: var(--accent); border-color: rgba(45,212,191,0.4); }
+
+/* ─────────────────────────── Dispatch Plan ─────────────────────────── */
+.plan-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* loading state */
+.plan-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 30px 16px;
+  color: var(--text-1);
+}
+.spinner {
+  width: 34px; height: 34px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.plan-loading .loading-sub { font-size: 12px; color: var(--text-2); }
+
+.plan-summary {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-0);
+  background: linear-gradient(135deg, rgba(124,92,255,0.10), rgba(45,212,191,0.06));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.plan-section { display: flex; flex-direction: column; gap: 8px; }
+.plan-section > .sec-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+
+.kv { display: flex; gap: 8px; font-size: 13px; line-height: 1.45; }
+.kv .k { color: var(--text-2); min-width: 92px; flex-shrink: 0; }
+.kv .v { color: var(--text-0); }
+
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--bg-3);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+}
+
+/* recommended technician card */
+.tech-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.tech-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; color: #04141a; font-size: 14px;
+  flex-shrink: 0;
+}
+.tech-info { flex: 1; }
+.tech-name { font-weight: 600; font-size: 14px; }
+.tech-sub { font-size: 12px; color: var(--text-2); }
+.tech-eta {
+  text-align: right;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+}
+.tech-eta small { display: block; font-size: 10px; color: var(--text-2); font-weight: 400; }
+
+/* parts list */
+.part-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.part-item:last-child { border-bottom: none; }
+.part-name { flex: 1; }
+.part-status { font-size: 11px; font-weight: 600; }
+.part-status.in { color: var(--ok); }
+.part-status.out { color: var(--danger); }
+.part-dist { font-size: 11px; color: var(--text-2); font-family: var(--mono); }
+
+/* drafted messages */
+.msg-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.msg-head {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-2);
+  margin-bottom: 5px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.msg-body { font-size: 13px; line-height: 1.5; color: var(--text-0); white-space: pre-wrap; }
+
+/* proposed actions preview */
+.action-preview {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 12.5px;
+  padding: 7px 0;
+  color: var(--text-1);
+}
+.action-preview .ai { font-size: 15px; }
+
+/* primary buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.15s, opacity 0.15s;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #21b5a3);
+  color: #04141a;
+  box-shadow: 0 4px 16px rgba(45, 212, 191, 0.25);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+
+.btn-approve {
+  background: linear-gradient(135deg, var(--accent-2), #5a3fe0);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(124, 92, 255, 0.28);
+}
+.btn-approve:hover:not(:disabled) { filter: brightness(1.1); }
+
+.btn-success { background: var(--ok); color: #04201a; }
+
+/* ─────────────────────────── Timeline ─────────────────────────── */
+.timeline { max-height: 40vh; overflow-y: auto; padding: 6px 0; }
+
+.tl-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 16px;
+  position: relative;
+}
+.tl-item::before {
+  content: "";
+  position: absolute;
+  left: 27px; top: 34px; bottom: -4px;
+  width: 2px;
+  background: var(--border);
+}
+.tl-item:last-child::before { display: none; }
+
+.tl-icon {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.tl-body { flex: 1; min-width: 0; }
+.tl-summary { font-size: 13px; line-height: 1.4; color: var(--text-0); }
+.tl-meta { font-size: 11px; color: var(--text-2); margin-top: 3px; display: flex; gap: 8px; }
+.tl-actor {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ─────────────────────────── Map markers ─────────────────────────── */
+.ff-marker {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid #0a0e17;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.25);
+}
+.ff-marker.tech-available { background: var(--ok); }
+.ff-marker.tech-busy { background: var(--busy); }
+.ff-job {
+  width: 16px; height: 16px;
+  border: 2px solid #0a0e17;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.25);
+  transform: rotate(45deg);
+}
+.ff-job.critical { background: var(--sev-critical); box-shadow: 0 0 12px var(--sev-critical); }
+.ff-job.high { background: var(--sev-high); }
+.ff-job.medium { background: var(--sev-medium); }
+.ff-job.low { background: var(--sev-low); }
+.ff-job.assigned { opacity: 0.5; }
+
+/* ── Interactive dispatch: recommended technician + route ───────────────── */
+
+/* Recommended technician marker — larger, accent-colored, gently pulsing. */
+.ff-marker.tech-recommended {
+  position: relative;
+  width: 24px; height: 24px;
+  background: var(--accent);
+  border: 2px solid #04141a;
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.55), 0 0 16px var(--accent);
+  animation: rec-pulse 1.6s ease-in-out infinite;
+}
+@keyframes rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.55), 0 0 14px var(--accent); }
+  50%      { box-shadow: 0 0 0 8px rgba(45, 212, 191, 0),   0 0 24px var(--accent); }
+}
+
+/* One-shot ping ring when a technician is located from the plan card. */
+.ff-marker.ping { position: relative; }
+.ff-marker.ping::after {
+  content: "";
+  position: absolute; inset: -5px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: ping 0.7s ease-out 2;
+}
+@keyframes ping {
+  from { transform: scale(0.5); opacity: 0.9; }
+  to   { transform: scale(2.6); opacity: 0; }
+}
+
+/* The job → technician route line (animated dash flow). */
+.dispatch-route {
+  stroke-dasharray: 1 10;
+  filter: drop-shadow(0 0 4px #38bdf8);
+  animation: dash-flow 1s linear infinite;
+}
+@keyframes dash-flow { to { stroke-dashoffset: -22; } }
+
+/* Recommended-technician card becomes a button that locates them on the map. */
+.tech-card.clickable {
+  cursor: pointer;
+  position: relative;
+  transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
+}
+.tech-card.clickable:hover {
+  border-color: var(--accent);
+  background: var(--bg-3);
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px var(--accent-glow), var(--shadow);
+}
+.locate-hint {
+  position: absolute;
+  bottom: 6px; right: 12px;
+  font-size: 10px;
+  color: var(--accent);
+  background: rgba(45, 212, 191, 0.12);
+  border: 1px solid rgba(45, 212, 191, 0.30);
+  padding: 2px 8px;
+  border-radius: 999px;
+  opacity: 0.55;
+  transition: opacity .15s;
+}
+.tech-card.clickable:hover .locate-hint { opacity: 1; }
+
+/* Leaflet popups themed */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-1);
+  color: var(--text-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.leaflet-popup-tip { background: var(--bg-1); border: 1px solid var(--border); }
+.leaflet-popup-content { margin: 12px 14px; font-size: 13px; }
+.popup-title { font-weight: 700; margin-bottom: 4px; }
+.popup-sub { color: var(--text-2); font-size: 12px; }
+
+/* ─────────────────────────── Toasts ─────────────────────────── */
+.toast-host {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.toast {
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text-0);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  animation: toast-in 0.25s ease;
+  max-width: 460px;
+}
+.toast.error { border-color: rgba(255,77,94,0.5); background: rgba(255,77,94,0.12); }
+.toast.success { border-color: rgba(52,211,153,0.5); background: rgba(52,211,153,0.12); }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* scrollbars */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bg-3); }
